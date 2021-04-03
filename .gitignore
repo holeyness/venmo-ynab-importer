@@ -1,0 +1,4 @@
+env
+package
+deployment-package.zip
+*.pyc
