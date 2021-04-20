@@ -1,10 +1,13 @@
-import time
-
+import datetime
+import pytz
 from ynab_sdk.api.models.requests.transaction import TransactionRequest
+
+tz = pytz.timezone('America/New_York')
 
 
 def convert_epoch_to_date(epoch):
-    return time.strftime('%Y-%m-%d', time.localtime(epoch))
+    dt = datetime.datetime.fromtimestamp(epoch, tz)
+    return dt.strftime('%Y-%m-%d')
 
 
 def convert_to_miliunits(amount):
