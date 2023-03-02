@@ -23,7 +23,10 @@ class Transaction:
 
     def __repr__(self):
         transaction = self.transaction
-        return f"{transaction.payment_id} on {convert_epoch_to_date(transaction.date_completed)}: {transaction.actor.display_name} {transaction.payment_type} {transaction.target.display_name} for ${transaction.amount} / {transaction.note}"
+        return f"{transaction.payment_id} on {self.get_date()}: {transaction.actor.display_name} {transaction.payment_type} {transaction.target.display_name} for ${transaction.amount} / {transaction.note}"
+
+    def get_date(self):
+        return convert_epoch_to_date(self.transaction.date_completed or self.transaction.date_created or self.transaction.date_updated)
 
     # Charge / Pay
     # Actor / target
@@ -52,7 +55,7 @@ class Transaction:
             return self.transaction.actor.display_name
 
     def serialize_ynab_transaction(self):
-        return TransactionRequest(date=convert_epoch_to_date(self.transaction.date_completed),
+        return TransactionRequest(date=self.get_date(),
                                   amount=self.get_transaction_amount(),
                                   account_id=self.ynab_venmo_account_id,
                                   payee_name=self.get_payee(),
