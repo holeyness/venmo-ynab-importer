@@ -13,10 +13,10 @@ def auth_ynab(event):
     return YNAB(event['ynab_key'])
 
 
-def get_venmo_transactions(venmo_client, venmo_handle, ynab_venmo_account_id):
-    user_id = venmo_client.user.get_my_profile().id
-    transactions = venmo_client.user.get_user_transactions(user_id=user_id)
-    return list(map(lambda x: Transaction(x, venmo_handle, ynab_venmo_account_id), transactions))
+def get_venmo_transactions(venmo_client, ynab_venmo_account_id):
+    profile = venmo_client.user.get_my_profile()
+    transactions = venmo_client.user.get_user_transactions(user_id=profile.id)
+    return list(map(lambda x: Transaction(x, profile.username, ynab_venmo_account_id), transactions))
 
 
 def record_new_transactions(venmo_transactions, existing_transactions, ynab_client, budget_id):
@@ -50,7 +50,7 @@ def handler(event, context):
     ynab_client = auth_ynab(event)
 
     budget_id = get_latest_budget_id(ynab_client)
-    venmo_transactions = get_venmo_transactions(venmo_client, event['venmo_handle'], event['account_id'])
+    venmo_transactions = get_venmo_transactions(venmo_client, event['account_id'])
     existing_transactions = ynab_client.transactions.get_transactions(budget_id=budget_id).data.transactions
 
     record_new_transactions(venmo_transactions, existing_transactions, ynab_client, budget_id)
@@ -59,7 +59,6 @@ def handler(event, context):
 
 if __name__ == "__main__":
     payload = {
-        'venmo_handle': os.environ['VENMO_HANDLE'],
         'venmo_access_token': os.environ['VENMO_TOKEN'],
         'ynab_key': os.environ['YNAB_KEY'],
         'account_id': os.environ['YNAB_VENMO_ACCOUNT_ID'],
