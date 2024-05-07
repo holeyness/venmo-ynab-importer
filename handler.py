@@ -40,19 +40,14 @@ def update_uncleared_transactions(venmo_transactions, existing_transactions, yna
         ynab_client.transactions.update_transaction(budget_id=budget_id, transaction_id=transaction.id, transaction=transaction)
 
 
-def get_latest_budget_id(ynab_client):
-    budgets = ynab_client.budgets.get_budgets().data.budgets
-
-    return sorted(budgets, reverse=True, key=lambda budget: budget.last_modified_on)[0].id
-
-
 def handler(event, context):
     venmo_client = auth_venmo(event)
     ynab_client = auth_ynab(event)
 
     budget_id = event['budget_id']
-    venmo_transactions = get_venmo_transactions(venmo_client, event['account_id'])
-    existing_transactions = ynab_client.transactions.get_transactions(budget_id=budget_id).data.transactions
+    ynab_account_id = event['account_id']
+    venmo_transactions = get_venmo_transactions(venmo_client, ynab_account_id)
+    existing_transactions = ynab_client.transactions.get_transactions_from_account(budget_id=budget_id, account_id=ynab_account_id).data.transactions
 
     record_new_transactions(venmo_transactions, existing_transactions, ynab_client, budget_id)
     update_uncleared_transactions(venmo_transactions, existing_transactions, ynab_client, budget_id)
