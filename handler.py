@@ -25,7 +25,8 @@ def record_new_transactions(venmo_transactions, existing_transactions, ynab_clie
     existing_transaction_as_set = {(transaction.date, transaction.amount, transaction.payee_name) for transaction in existing_transactions}
     missing_transactions = [transaction for transaction in imported_transaction if (transaction.date, transaction.amount, transaction.payee_name) not in existing_transaction_as_set]
 
-    ynab_client.transactions.create_transactions(budget_id=budget_id, transactions=missing_transactions)
+    if missing_transactions:
+        ynab_client.transactions.create_transactions(budget_id=budget_id, transactions=missing_transactions)
 
 
 def update_uncleared_transactions(venmo_transactions, existing_transactions, ynab_client, budget_id):
@@ -49,7 +50,7 @@ def handler(event, context):
     venmo_client = auth_venmo(event)
     ynab_client = auth_ynab(event)
 
-    budget_id = get_latest_budget_id(ynab_client)
+    budget_id = event['budget_id']
     venmo_transactions = get_venmo_transactions(venmo_client, event['account_id'])
     existing_transactions = ynab_client.transactions.get_transactions(budget_id=budget_id).data.transactions
 
@@ -62,6 +63,7 @@ if __name__ == "__main__":
         'venmo_access_token': os.environ['VENMO_TOKEN'],
         'ynab_key': os.environ['YNAB_KEY'],
         'account_id': os.environ['YNAB_VENMO_ACCOUNT_ID'],
+        'budget_id': os.environ['BUDGET_ID']
     }
 
     handler(payload, None)
