@@ -28,10 +28,14 @@ class Transaction:
     def get_date(self):
         return convert_epoch_to_date(self.transaction.date_completed or self.transaction.date_created or self.transaction.date_updated)
 
+    @property
+    def _user_is_actor(self) -> bool:
+        return self.transaction.actor.username.lower() == self.venmo_user_handle.lower()
+
     # Charge / Pay
     # Actor / target
     def get_transaction_amount(self):
-        if self.transaction.actor.username == self.venmo_user_handle:
+        if self._user_is_actor:
             # If I am the actor
             if self.transaction.payment_type == "charge":
                 # If I charge someone
@@ -49,7 +53,7 @@ class Transaction:
                 return convert_to_miliunits(self.transaction.amount)
 
     def get_payee(self):
-        if self.transaction.actor.username == self.venmo_user_handle:
+        if self._user_is_actor:
             return self.transaction.target.display_name
         else:
             return self.transaction.actor.display_name
