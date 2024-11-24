@@ -3,6 +3,10 @@ import os
 from venmo_api import Client
 from ynab_sdk import YNAB
 from transaction import Transaction
+from datetime import *
+from dateutil.relativedelta import relativedelta
+
+EARLIEST_TXN = (date.today() + relativedelta(months=-1)).strftime('%Y-%m-%d')
 
 
 def auth_venmo(event):
@@ -16,7 +20,7 @@ def auth_ynab(event):
 def get_venmo_transactions(venmo_client, ynab_venmo_account_id):
     profile = venmo_client.user.get_my_profile()
     transactions = venmo_client.user.get_user_transactions(user_id=profile.id)
-    return list(map(lambda x: Transaction(x, profile.username, ynab_venmo_account_id), transactions))
+    return list(filter(lambda txn: txn.get_date() > EARLIEST_TXN, map(lambda x: Transaction(x, profile.username, ynab_venmo_account_id), transactions)))
 
 
 def record_new_transactions(venmo_transactions, existing_transactions, ynab_client, budget_id):
@@ -47,7 +51,7 @@ def handler(event, context):
     budget_id = event['budget_id']
     ynab_account_id = event['account_id']
     venmo_transactions = get_venmo_transactions(venmo_client, ynab_account_id)
-    existing_transactions = ynab_client.transactions.get_transactions_from_account(budget_id=budget_id, account_id=ynab_account_id).data.transactions
+    existing_transactions = list(filter(lambda txn: txn.date > EARLIEST_TXN, ynab_client.transactions.get_transactions_from_account(budget_id=budget_id, account_id=ynab_account_id).data.transactions))
 
     record_new_transactions(venmo_transactions, existing_transactions, ynab_client, budget_id)
     update_uncleared_transactions(venmo_transactions, existing_transactions, ynab_client, budget_id)

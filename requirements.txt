@@ -2,3 +2,4 @@ venmo-api
 ynab-sdk
 pytz
 datetime
+python-dateutil

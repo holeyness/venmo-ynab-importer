@@ -1,4 +1,5 @@
-env
+venv
 package
 deployment-package.zip
 *.pyc
+.idea
