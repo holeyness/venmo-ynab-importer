@@ -24,10 +24,15 @@ def get_venmo_transactions(venmo_client, ynab_venmo_account_id):
 
 
 def record_new_transactions(venmo_transactions, existing_transactions, ynab_client, budget_id):
-    imported_transaction = [transaction.serialize_ynab_transaction() for transaction in venmo_transactions]
-
     existing_transaction_as_set = {(transaction.date, transaction.amount, transaction.payee_name) for transaction in existing_transactions}
-    missing_transactions = [transaction for transaction in imported_transaction if (transaction.date, transaction.amount, transaction.payee_name) not in existing_transaction_as_set]
+    existing_transaction_memo = {(transaction.payee_name, transaction.memo) : transaction.category_id for transaction in existing_transactions}
+
+    missing_transactions = []
+    for transaction in venmo_transactions:
+        if (transaction.get_date(), transaction.get_transaction_amount(), transaction.get_payee()) not in existing_transaction_as_set:
+            if (transaction.get_payee(), transaction.get_note()) in existing_transaction_memo.keys():
+                transaction.add_category_id(existing_transaction_memo.get((transaction.get_payee(), transaction.get_note())))
+            missing_transactions.append(transaction.serialize_ynab_transaction())
 
     if missing_transactions:
         ynab_client.transactions.create_transactions(budget_id=budget_id, transactions=missing_transactions)

@@ -20,6 +20,7 @@ class Transaction:
         self.transaction = transaction
         self.venmo_user_handle = venmo_user_handle
         self.ynab_venmo_account_id = ynab_venmo_account_id
+        self.category_id = None
 
     def __repr__(self):
         transaction = self.transaction
@@ -27,6 +28,12 @@ class Transaction:
 
     def get_date(self):
         return convert_epoch_to_date(self.transaction.date_completed or self.transaction.date_created or self.transaction.date_updated)
+
+    def add_category_id(self, category_id):
+        self.category_id = category_id
+
+    def get_note(self):
+        return self.transaction.note
 
     @property
     def _user_is_actor(self) -> bool:
@@ -63,5 +70,6 @@ class Transaction:
                                   amount=self.get_transaction_amount(),
                                   account_id=self.ynab_venmo_account_id,
                                   payee_name=self.get_payee(),
+                                  category_id=self.category_id,
                                   cleared="cleared",
                                   memo=self.transaction.note)
